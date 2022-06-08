@@ -9,15 +9,8 @@ import serial
 import serial.tools.list_ports
 from serial import SerialException
 from flask_socketio import SocketIO, emit
-
-# import PySimpleGUI as sg
 import notification
 import globals
-
-# answer to <ESC>.O Output Extended Status Information [Manual: 10-42]
-EXT_STATUS_BUF_EMPTY = 0x08  # buffer empty
-EXT_STATUS_VIEW = 0x10  # "view" button has been pressed, plotting suspended
-EXT_STATUS_LEVER = 0x20  # paper lever raised, potting suspended
 
 ERRORS = {
     # our own code
@@ -89,29 +82,27 @@ def chk_error(tty):
         raise HPGLError(ret)
 
 
-def plotter_cmd(tty, cmd, get_answer=False):
+def getReplySTR(tty,cmd):
+    tty.write(cmd)    
+    reply = str(tty.read_until(b'\r').decode("utf-8"))
+    if len(reply) > 1:
+        return reply
+    else:
+        raise HPGLError(-1)  # timeout
+        return   
+
+
+def plotter_cmd(tty, cmd, get_answer=True):
     tty.write(cmd)
     try:
         if get_answer:
             answ = read_answer(tty)
-        chk_error(tty)
+        # chk_error(tty)
         if get_answer:
             return answ
     except HPGLError as e:
         e.add_cause(f'after sending {repr(cmd)[1:]}')
         raise e
-
-def baud_rate_test(serial_port, packet = b'IN;OI;'):
-    ser = serial.Serial(serial_port)
-    ser.timeout = 0.5
-    for baudrate in ser.BAUDRATES:
-        if 75 <= baudrate <= 19200:
-            ser.baudrate = baudrate
-            ser.write(packet)
-            resp = ser.readall()
-            if resp == packet:
-                return baudrate
-    return 'Unknown'
 
 def listComPorts():
     ports = dict(name='ports', content=[])
@@ -119,9 +110,27 @@ def listComPorts():
         ports['content'].append(str(i).split(" ")[0])
     return ports
 
-def sendToPlotter(socketio, hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
-    print(plotter)
 
+def getBaudRate(t_port):
+
+    baud_dict = [9600, 19200, 38400, 4800, 2400, 1200]
+    message = 'IN;OI;OE'
+    success = False
+    ser = serial.Serial(port=t_port, timeout=0.3)
+    
+    for baud_rate in baud_dict:
+        ser.baudrate = baud_rate
+        ser.write(message.encode())
+        read_val = ser.read(size=64)
+        if  len(read_val) > 0:
+            if read_val.decode() != message:
+                return baud_rate 
+                break
+    ser.close() 
+    
+
+def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
+    
     globals.printing = True
     input_bytes = None
 
@@ -135,84 +144,130 @@ def sendToPlotter(socketio, hpglfile, port = 'COM3', baud = 9600, plotter = '747
 
     hpgl = open(hpglfile, 'rb')
 
-    if (plotter == 'mp4200'):
+    if (flowControl == 'XON/XOFF'):
+        
         try:
-            tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+            tty.write(b'IN;\033.I80;;17:\033.N10;19:\033.@;0:')
+            # tty.write(b'\033.E')
         except SerialException as e:
             socketio.emit('error', {'error': repr(e)})
             print(repr(e))
             return False
+
+    if (flowControl == 'HP-IB'):
+        try:
+            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
+        except SerialException as e:
+            socketio.emit('error', {'error': repr(e)})
+            print(repr(e))
+            return False               
+
     else:
         try:
-            tty = serial.Serial(port, baudrate = 9600, timeout=2.0)
+            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
+            tty.write(b'IN;\033.R')
         except SerialException as e:
             socketio.emit('error', {'error': repr(e)})
             print(repr(e))
             return False
 
-    # <ESC>.@<dec>;<dec>:
-    #  1st parameter is buffer size 0..1024, optional
-    #  2nd parameter is bit flags for operation mode
-    #     0x01 : enable HW handhaking
-    #     0x02 : ignored
-    #     0x04 : monitor mode 1 if set, mode 0 if unset (for terminal)
-    #     0x08 : 0: disable monitor mode, 1: enable monitor mode
-    #     0x10 : 0: normal mode, 1: block mode
     try:
-        plotter_cmd(tty, b'\033.@;0:')  # Plotter Configuration [Manual 10-27]
-        plotter_cmd(tty, b'\033.Y')  # Plotter On [Manual 10-26]
-        plotter_cmd(tty, b'\033.K')  # abort graphics
-        plotter_cmd(tty, b'IN;')  # HPGL initialize
-#        plotter_cmd(tty, b'\033.0')  # raise error
-        # Output Buffer Size [Manual 10-36]
-        bufsz = plotter_cmd(tty, b'\033.L', True)
+        plotter_id = getReplySTR(tty, b'IN;OI;')
+        socketio.emit('status_log', {'data': 'Plotter identifies as ' + plotter_id})    
+
     except HPGLError as e:
-        print('*** Error initializing the plotter!')
-        print(e)
-
-        socketio.emit('error', {'data': '*** Error initializing the plotter!'})
-        socketio.emit('error', {'data': str(e)})
-
-        # sys.exit(1)
+        print('No plotter detected!')
+        socketio.emit('error', {'data': 'No plotter detected!'})
         return
-
-    print('Buffer size of plotter is', bufsz, 'bytes.')
-    socketio.emit('status_log', {'data': 'Buffer size of plotter is ' + str(bufsz) + ' bytes.'})
-
+    
+    print('Configured for ', flowControl, ' flow control.')
+    socketio.emit('status_log', {'data': 'Configured for ' + str(flowControl) + ' flow control.'})
     total_bytes_written = 0
 
+    if flowControl not in ['HP-IB','XON/XOFF']:
+        try:
+            bufsz = plotter_cmd(tty, b'\033.L', True)
+            socketio.emit('buffer_size', {'data': str(bufsz) })
+
+        except HPGLError as e:
+            print('*** Error initializing the plotter!')
+            print(e)
+
+            socketio.emit('error', {'data': '*** Error initializing the plotter!'})
+            socketio.emit('error', {'data': str(e)})
+            return
+
+        print('Size of plotter buffer is ', bufsz, ' bytes.')
+        socketio.emit('status_log', {'data': 'Size of plotter buffer is ' + str(bufsz) + ' bytes.'})
+        socketio.emit('buffer_size', {'data': str(bufsz) })
+
+    prev_percent = 0
+
     while globals.printing == True:
-        status = plotter_cmd(tty, b'\033.O', True)
-        if (status & (EXT_STATUS_VIEW | EXT_STATUS_LEVER)):
-            print('*** Printer is viewing plot, pausing data.')
-            socketio.emit('status_log', {'data': '*** Printer is viewing plot, pausing data.'})
-            time.sleep(5.0)
-            continue
-
-        bufsz = plotter_cmd(tty, b'\033.B', True)
-        if bufsz < 256:
-            sys.stdout.flush()
-            time.sleep(0.25)
-            continue
-
-        data = hpgl.read(bufsz - 128)
+  
+        if (flowControl == 'HP-IB'):
+            data = hpgl.read(1)
+        else :
+            data = hpgl.read(30)    
         bufsz_read = len(data)
+        #  there is a bug in pyserial - we need to handle CTS ourselves 
+        #  https://github.com/pyserial/pyserial/issues/89#issuecomment-811932067
+
+        if flowControl in ["CTS/RTS", "HP-IB"]:
+            while not tty.getCTS():
+                pass
+
+        if flowControl not in ['HP-IB','XON/XOFF']:
+            try:
+                bufsp = plotter_cmd(tty, b'\033.B', True)
+
+            except HPGLError as e:
+                print('*** Error initializing the plotter!')
+                print(e)
+
+                socketio.emit('error', {'data': '*** Error on buffer spcace querry!'})
+                socketio.emit('error', {'data': str(e)})
+                return
+
+            # print('Buffer has ', bufsp, ' bytes of free space.')
+            socketio.emit('buffer_space', {'data': str(bufsp) })
+
+        
+        if (flowControl == 'Software'):
+            if bufsp < bufsz/2: # the smallest buffer on the 7440a is 60 bytes                    
+                time.sleep(0.2)                    
+
+        tty.write(data)
+        total_bytes_written += bufsz_read        
 
         if bufsz_read == 0:
-            print('*** EOF reached, exiting.')
-            notification.telegram_sendNotification('*** EOF reached, exiting.')
-            socketio.emit('status_log', {'data': '*** EOF reached, exiting.'})
+
+            if flowControl not in ['HP-IB','XON/XOFF']:
+                while bufsp != bufsz:
+                    bufsp = plotter_cmd(tty, b'\033.B', True)  
+                    time.sleep(0.5)
+                    socketio.emit('buffer_space', {'data': str(bufsp)})
+                    
+            print('*** End of Print, exiting.')    
+            notification.telegram_sendNotification('*** End of Print, exiting.')    
+            socketio.emit('bytes_written', {'data': f'**EOP** - {total_bytes_written} bytes sent. Exiting.'})
+            socketio.emit('end_of_print', {'data': 'True' })
             break
 
         if input_bytes != None:
-            percent = 100.0 * total_bytes_written/input_bytes
-            print(f'{percent:.2f}%, {total_bytes_written} byte written.')
-            socketio.emit('status_log', {'data': f'{percent:.2f}%, {total_bytes_written} byte written.'})
-            socketio.emit('print_progress', {'data': f'{percent:.2f}'})
+
+            percent = int(100.0 * total_bytes_written/input_bytes)
+
+            if (percent != prev_percent):
+                # print(f'{percent:.0f}%, {total_bytes_written} bytes written.')
+                socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
+                # socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
+                socketio.emit('print_progress', {'data': percent})
+                prev_percent = percent
 
         else:
-            print(f'{percent:.2f}%, {bufsz_read} byte added.')
-            socketio.emit('status_log', {'data': f'{percent:.2f}%, {bufsz_read} byte added.'})
+            # print(f'{percent:.0f}%, {bufsz_read} bytes added.')
+            socketio.emit('status_log', {'data': f'{percent:.0f}%, {bufsz_read} bytes added.'})
 
-        tty.write(data)
-        total_bytes_written += bufsz_read
+    return

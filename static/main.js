@@ -1,5 +1,6 @@
 // Update port list
 function updatePorts() {
+
   axios.get('/update_ports')
     .then(function(response) {
       // handle success
@@ -16,6 +17,34 @@ function updatePorts() {
       console.error(error);
     })
     .then(function() {});
+}
+
+// Auto detect Baudrate
+function updateBaud() {
+ 
+  // load spinner icon while the pi check for baudrate
+  jQuery(".updateBaud").html('<a href="#" class="uk-icon-link mac-button updateBaud" title="Auto detect baudrate" uk-spinner></a>');
+
+   // send port info over first
+   jQuery.post('/update_baud', { 'selected_port' : jQuery('#portList').val() }, function(response) {
+ 
+    console.log(response);
+    if (response != 'None') {
+      // change to new baudrate value
+      $(".baudRate").val(response);
+    }
+    else {
+      notify('Plotter not detected', 'warning')
+    }
+    // put back normal icon
+    jQuery(".updateBaud").html('<a href="#" class="uk-icon-link mac-button updateBaud" title="Auto detect baudrate" data-uk-tooltip data-uk-icon="icon: search"></a>')
+  })
+
+  .fail(function(error) {
+    notify(error, 'danger')
+    console.error(error);
+  })
+  .then(function() {});
 }
 
 // Update file list
@@ -75,6 +104,13 @@ function deleteFile(element) {
     .then(function() {});
 }
 
+// Update page size options
+function updatePageSize(element) {
+  // TODO add pagesize filter for the machines
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+}
+
 // Handle file conversion
 function convertFileModal(element) {
   const filename = jQuery(element).data('filename');
@@ -83,9 +119,10 @@ function convertFileModal(element) {
 }
 
 // Start conversion
-function convertFile() {
+function convertFile() {  
   const convertData = jQuery('#convertData').serializeArray()
   console.log('convertData', convertData);
+  jQuery("#loader").removeClass('uk-hidden');
 
   // Validation
   if (jQuery('#convertFile').val() == '') {
@@ -95,16 +132,27 @@ function convertFile() {
 
   axios.post('/start_conversion', jQuery('#convertData').serialize())
     .then(function(response) {
-      console.log(response);
+      
       // handle success
       if (response.status == 200) {
+
+        if (response.data == 'File not converted.') {
+          console.error(response);
+          notify(response.data, 'danger');
+        } 
+        else {
+          console.log(response);
+          notify(response.data, 'susuccess');
+        }
+
         updateFiles();
         UIkit.modal('#modal-convertFile').hide();
-        notify(response.data, 'warning')
+        jQuery("#loader").addClass('uk-hidden');
+
       }
     })
     .catch(function(error) {
-      notify(error, 'danger')
+      notify(error, 'danger');
       console.error(error);
     });
 }
@@ -130,12 +178,14 @@ function showCard(element) {
 function clearLog() {
   // Remove old content from log
   jQuery('#statusLog').html('');
+  jQuery('#bytes_written').html('');
 }
 
 // Start plotting
 function startPlot() {
   const plotterData = jQuery('#plotterData').serializeArray()
   console.log('plotterData', plotterData);
+
 
   // Validation
   if (jQuery('#fileName').val() == '') {
@@ -147,10 +197,10 @@ function startPlot() {
     updatePorts()
     return false
   }
-
+  
   axios.post('/start_plot', jQuery('#plotterData').serialize())
     .then(function(response) {
-      // handle success
+      // handle success      
       if (response.status == 200) {
         console.log(response);
       }
@@ -172,6 +222,7 @@ function stopPlot() {
 
         // Update sidebar
         jQuery('.selectedFilename').html("");
+        jQuery('#statusLog').html('Plot canceled' + "<br>");
       }
     })
     .catch(function(error) {
@@ -241,11 +292,11 @@ function updateConfiguration() {
         jQuery('#telegram_chatid').val(response.data.telegram_chatid);
         jQuery('#tasmota_enable').val(response.data.tasmota_enable);
         jQuery('#tasmota_ip').val(response.data.tasmota_ip);
-
         jQuery('.plotter_name').html(response.data.plotter_name);
         jQuery('.portList').val(response.data.plotter_port).change();
         jQuery('#device').val(response.data.plotter_device).change();
-        jQuery('#baudRate').val(response.data.plotter_baudrate).change();
+        jQuery('#baudrate').val(response.data.plotter_baudrate).change();
+        jQuery('#flowControl').val(response.data.plotter_flowControl).change();
       }
     })
     .catch(function(error) {
@@ -266,11 +317,11 @@ function actionOpenConfig() {
         jQuery('#telegram_chatid').val(response.data.telegram_chatid);
         jQuery('#tasmota_enable').val(response.data.tasmota_enable);
         jQuery('#tasmota_ip').val(response.data.tasmota_ip);
-
         jQuery('#plotter_name').val(response.data.plotter_name);
         jQuery('#plotter_port').val(response.data.plotter_port).change();
         jQuery('#plotter_device').val(response.data.plotter_device).change();
         jQuery('#plotter_baudrate').val(response.data.plotter_baudrate).change();
+        jQuery('#plotter_flowControl').val(response.data.plotter_flowControl).change();
 
         UIkit.modal('#modal-configFile').show();
       }
