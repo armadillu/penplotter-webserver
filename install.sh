@@ -15,6 +15,9 @@ spinner()
     printf "    \b\b\b\b"
 }
 printf "\033[?25l"
+#get the curret debian version info
+lsb_release -ds
+echo ""
 echo "Updating apt. This will take a while..."
 (sudo apt-get -y update -qq) & spinner
 wait

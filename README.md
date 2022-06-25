@@ -27,14 +27,14 @@ Python webservice to simplify working with pen plotters:
 
 ## Installation
 
-An easy install script is included.
+This quick and easy easy install script is intended to be used with Raspibain OS, preferably the 64 bit Lite version. 
 From the home directory, run:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/ithinkido/penplotter-webserver/flowcontrol/install.sh | bash
 ```
 
-Your Raspberry Pi will reboot once installation is completed.
+This will install the Pen Plotter Web Server and will reboot the Raspberry Pi once installation is completed.
 
 ## Usage
 
