@@ -34,9 +34,6 @@ if [ ! -d "$dir" ] ; then
     echo ""
     echo "Installing pip packages"
     (sudo pip install -r $dir/requirements.txt -qq) & spinner 
-    echo ""
-    echo "Installing pipx"
-    (python3 -m pip install --user --no-warn-script-location pipx -qq) & spinner 
     python3 -m pipx ensurepath > /dev/null
     export PATH="$PATH:/home/pi/.local/bin" > /dev/null
     echo ""
@@ -50,6 +47,7 @@ if [ ! -d "$dir" ] ; then
     sudo systemctl enable webplotter 
     sudo systemctl start webplotter 
     printf "\033[?25h"
+    echo ""
     printf "Rebooting in 5 sec "
     (for i in $(seq 4 -1 1); do
         sleep 1;
