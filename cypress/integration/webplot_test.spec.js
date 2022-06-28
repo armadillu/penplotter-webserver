@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+
 context('Actions', () => {
   before(() => {    
     cy.visit('http://localhost:5000')
@@ -20,6 +21,8 @@ context('Actions', () => {
   
   it('start conversion', () => {
     cy.get('.startConversion').click()
+    cy.wait(100)
+    cy.screenshot('/test_snapshots')
   })
 
   it('check conversion success', () => {

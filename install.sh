@@ -17,6 +17,7 @@ spinner()
 printf "\033[?25l"
 #get the curret debian version info
 lsb_release -ds
+python -V
 echo ""
 echo "Updating apt. This will take a while..."
 (sudo apt-get -y update -qq) & spinner
@@ -29,17 +30,17 @@ if [ ! -d "$dir" ] ; then
     (sudo apt-get install -y git python3-pip libgeos-c1v5 libatlas-base-dev python3-venv > /dev/null) & spinner 
     wait
     echo ""
-    echo "Dowloading Web Plotter from Github"
+    echo "Downloading Web Plotter from Github"
     git clone -q -b flowcontrol https://github.com/ithinkido/penplotter-webserver.git "$dir" > /dev/null
     echo ""
     echo "Installing pip packages"
-    (sudo pip install -r $dir/requirements.txt -qq) & spinner 
+    (python3 -m pip install -r $dir/requirements.txt -qq) & spinner 
     python3 -m pipx ensurepath > /dev/null
     export PATH="$PATH:/home/pi/.local/bin" > /dev/null
     echo ""
-    pipx install vpype
+    python3 -m pipx install vpype
     echo ""
-    echo "Auto start webplotter on boot"
+    echo "Auto start Web Plotter on boot"
     echo ""
     cp $dir/config.ini.sample $dir/config.ini    
     sudo cp $dir/webplotter.service /etc/systemd/system/
@@ -63,7 +64,6 @@ else
     echo "Directory "$dir" already exists"
     echo ""
     echo "Updating packages"
-    echo ""
     # move user files out
     mkdir temp
     mv $dir/uploads/ temp/uploads/
@@ -75,8 +75,9 @@ else
     mv temp/* $dir/
     #clean up
     rm -R temp
-    (sudo pip install -r $dir/requirements.txt -U -q) & spinner
-    pipx upgrade vpype
+    (python3 -m pip install -r $dir/requirements.txt -U -q) & spinner
+    echo ""
+    python3 -m pipx upgrade vpype
     sudo systemctl restart webplotter
     printf "\033[?25h"
 fi

@@ -1,5 +1,6 @@
 ![Install script test](https://github.com/ithinkido/penplotter-webserver/actions/workflows/install_test.yml/badge.svg)
 
+[![Image of WebPlot - A Web interface for Pen Plotter](https://raw.githubusercontent.com/ithinkido/penplotter-webserver/flowcontrol/docs/img/Demo.gif)](https://github.com/ithinkido/penplotter-webserver/tree/flowcontrol)
 
 ### Changes made in this version
 
@@ -23,8 +24,6 @@ Python webservice to simplify working with pen plotters:
 - Power off your plotter on print end using a Tasmota-enabled Sonoff controller   
 
 
-[![Image of WebPlot - A Web interface for Pen Plotter](https://raw.githubusercontent.com/ithinkido/penplotter-webserver/flowcontrol/docs/img/Demo.gif)](https://github.com/ithinkido/penplotter-webserver/tree/flowcontrol)
-
 ## Installation
 
 This quick and easy easy install script is intended to be used with Raspibain OS, preferably the 64 bit Lite version. 
@@ -40,7 +39,7 @@ This will install the Pen Plotter Web Server and will reboot the Raspberry Pi on
 
 After install, open a browser and reach for:
 ```bash
-http://{{your Raspberry Pi address}}:5000
+http://{{your Raspberry-Pi IP address}}:5000
 ```
 
 Optional:

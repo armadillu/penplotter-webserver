@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # - uses: pguyot/arm-runner-action@v2
         with:
           path: './'
       - run: |  
@@ -40,4 +39,10 @@ jobs:
         if: always()
         with:
           name: cypress-videos
-          path: ./cypress/videos         
+          path: ./cypress/videos 
+
+      - uses: actions/upload-artifact@v1
+        if: always()
+        with:
+          name: cypress-screenshot
+          path: ./cypress/screenshots/webplot_test.spec.js/
