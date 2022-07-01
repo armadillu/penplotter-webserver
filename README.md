@@ -1,6 +1,9 @@
 ![Install script test](https://github.com/ithinkido/penplotter-webserver/actions/workflows/install_test.yml/badge.svg)
 
-[![Image of WebPlot - A Web interface for Pen Plotter](https://raw.githubusercontent.com/ithinkido/penplotter-webserver/flowcontrol/docs/img/Demo.gif)](https://github.com/ithinkido/penplotter-webserver/tree/flowcontrol)
+
+[![Image of WebPlot - A Web interface for Pen Plotter](https://raw.githubusercontent.com/ithinkido/penplotter-webserver/PiPlot/docs/img/Demo.gif)](https://github.com/ithinkido/penplotter-webserver/tree/flowcontrol)
+
+This branch has been modifed for use with the [Pi Plot shiled](https://github.com/ithinkido/PiPlot)
 
 ### Changes made in this version
 
@@ -30,7 +33,7 @@ This quick and easy easy install script is intended to be used with Raspibain OS
 From the home directory, run:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/ithinkido/penplotter-webserver/flowcontrol/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/ithinkido/penplotter-webserver/PiPlot/install.sh | bash
 ```
 
 This will install the Pen Plotter Web Server and will reboot the Raspberry Pi once installation is completed.

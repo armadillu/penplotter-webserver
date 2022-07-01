@@ -31,7 +31,7 @@ if [ ! -d "$dir" ] ; then
     wait
     echo ""
     echo "Downloading Web Plotter from Github"
-    git clone -q -b flowcontrol https://github.com/ithinkido/penplotter-webserver.git "$dir" > /dev/null
+    git clone -q -b PiPlot https://github.com/ithinkido/penplotter-webserver.git "$dir" > /dev/null
     echo ""
     echo "Installing pip packages"
     (python3 -m pip install -r $dir/requirements.txt -qq) & spinner 
@@ -69,7 +69,7 @@ else
     mv $dir/uploads/ temp/uploads/
     mv $dir/config.ini temp/config.ini
     rm -rf "$dir"
-    git clone -q -b flowcontrol https://github.com/ithinkido/penplotter-webserver.git "$dir" > /dev/null 
+    git clone -q -b PiPlot https://github.com/ithinkido/penplotter-webserver.git "$dir" > /dev/null 
     # add user files back
     rm -R $dir/uploads
     mv temp/* $dir/
