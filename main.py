@@ -11,6 +11,9 @@ import globals
 import send2serial
 import tasmota
 
+# import RPi.GPIO as GPIO
+  
+
 # Read Configuration
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -23,6 +26,13 @@ app.config['SECRET_KEY'] = '#tiUJ791&jPYI9N7Kj'
 app.config['DEBUG'] = True
 
 socketio = SocketIO(app)
+
+# Buttons setup
+
+# GPIO.setmode(GPIO.BCM) 
+# GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 
 def make_tree(path):
     tree = dict(name=os.path.basename(path), content=[])
@@ -67,7 +77,6 @@ def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off'
         return socketio.emit('error', {'data': 'Please select a valid file'})
 
 def convert(file, outputsize = 'a4',  pageorientation = 'landscape', device = 'hp7475a', linemerge  = '', linesort = '', linesimplify = '', reloop = ''):
-# def convert(file, pagesize = 'a4', outputsize = 'a4',  pageorientation = 'landscape', device = 'hp7475a', linemerge  = '', linesort = '', linesimplify = '', reloop = ''):
     if file:
 
         filename, file_extension = os.path.splitext(file)
@@ -122,6 +131,16 @@ def convert(file, outputsize = 'a4',  pageorientation = 'landscape', device = 'h
         else:
             socketio.emit('status_log', {'data': 'File converted.'})
             return 'Exported ' + str(outputFile)
+# ////////////////////////////////////////////////////////////////////////////            
+# Buttons :TODO - something useful with buttons
+def start_button(channel):
+    socketio.emit('status_log', {'data': 'Button 2 was pushed!'})
+
+def stop_button(channel):
+    socketio.emit('status_log', {'data': 'Button 1 was pushed!'})    
+
+# GPIO.add_event_detect(27,GPIO.RISING,callback=start_button)
+# GPIO.add_event_detect(22,GPIO.RISING,callback=stop_button)
 
 @app.errorhandler(413)
 def too_large(e):

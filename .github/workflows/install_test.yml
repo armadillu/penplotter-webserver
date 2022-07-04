@@ -3,7 +3,9 @@ name: Run install scrpit
 on:
   workflow_dispatch:
   push:
-    
+   branches:    
+      - 'PiPlot'
+
 jobs:
   Install_script_test:    
     runs-on: ubuntu-latest
