@@ -209,7 +209,10 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
         if (flowControl == 'HP-IB'):
             data = hpgl.read(1)
         else :
-            data = hpgl.read(30)    
+            if (bufsz < 80):
+                data = hpgl.read(10)   
+            else :
+                data = hpgl.read(30)
         bufsz_read = len(data)
         #  there is a bug in pyserial - we need to handle CTS ourselves 
         #  https://github.com/pyserial/pyserial/issues/89#issuecomment-811932067
@@ -236,7 +239,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
         
         if (flowControl == 'Software'):
             if bufsp < bufsz/2: # the smallest buffer on the 7440a is 60 bytes                    
-                time.sleep(0.2)                    
+                time.sleep(0.1)                    
 
         tty.write(data)
         total_bytes_written += bufsz_read        
