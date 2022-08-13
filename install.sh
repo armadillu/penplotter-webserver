@@ -20,7 +20,7 @@ lsb_release -ds
 python -V
 echo ""
 echo "Updating apt. This will take a while..."
-(sudo apt-get -y update -qq) & spinner
+(sudo apt-get update -qq) & spinner
 wait
 dir="$HOME/webplotter"
 ## Check for dir, if not found create it using the mkdir ##
@@ -41,7 +41,7 @@ if [ ! -d "$dir" ] ; then
     python3 -m pipx ensurepath > /dev/null
     export PATH="$PATH:/home/pi/.local/bin" > /dev/null
     echo ""
-    python3 -m pipx install vpype
+    python3 -m pipx install --pip-args "--prefer-binary vpype" vpype
     echo ""
     echo "Auto start Web Plotter on boot"
     echo ""
