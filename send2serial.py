@@ -147,7 +147,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
     if (flowControl == 'XON/XOFF'):
         
         try:
-            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+            tty = serial.Serial(port = port, baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
             tty.write(b'IN;\033.I80;;17:\033.N10;19:\033.@;0:')
             # tty.write(b'\033.E')
         except SerialException as e:
@@ -157,7 +157,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
     if (flowControl == 'HP-IB'):
         try:
-            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
+            tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
         except SerialException as e:
             socketio.emit('error', {'error': repr(e)})
             print(repr(e))
@@ -165,7 +165,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
     else:
         try:
-            tty = serial.Serial(port = '/dev/ttyAMA0', baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
+            tty = serial.Serial(port = port, baudrate = baud, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, timeout = 2.0)
             tty.write(b'IN;\033.R')
         except SerialException as e:
             socketio.emit('error', {'error': repr(e)})
