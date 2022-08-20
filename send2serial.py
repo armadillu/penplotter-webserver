@@ -273,11 +273,11 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
             percent = int(100.0 * total_bytes_written/input_bytes)
 
             if (percent != prev_percent):
-                if (percent != 25):
+                if (percent == 25):
                     notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 25%')
-                if (percent != 50):
+                if (percent == 50):
                     notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 50%')
-                if (percent != 75):
+                if (percent == 75):
                     notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 75%')
                 # print(f'{percent:.0f}%, {total_bytes_written} bytes written.')
                 socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
