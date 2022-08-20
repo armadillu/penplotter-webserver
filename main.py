@@ -236,6 +236,12 @@ def start_plot():
 def stop_plot():
     if request.method == "GET":
         globals.printing = False
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        PLOTTER_NAME = 'Plotter'
+        if (config.has_option('plotter', 'name')):
+            PLOTTER_NAME = config['plotter']['name']
+        notification.telegram_sendNotification(PLOTTER_NAME + ': Plot Cancelled')
         return 'Plot stopped'
 
 # Start converting file using vpype
