@@ -132,6 +132,12 @@ def getBaudRate(t_port):
 
 def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
     
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    PLOTTER_NAME = 'Plotter'
+    if (config.has_option('plotter', 'name')):
+        PLOTTER_NAME = config['plotter']['name']
+    
     globals.printing = True
     input_bytes = None
 
@@ -197,22 +203,12 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
             socketio.emit('error', {'data': '*** Error initializing the plotter!'})
             socketio.emit('error', {'data': str(e)})
-            config = configparser.ConfigParser()
-            config.read('config.ini')
-            PLOTTER_NAME = 'Plotter'
-            if (config.has_option('plotter', 'name')):
-                PLOTTER_NAME = config['plotter']['name']
             notification.telegram_sendNotification(PLOTTER_NAME + ': Error initializing the plotter')
             return
 
         print('Size of plotter buffer is ', bufsz, ' bytes.')
         socketio.emit('status_log', {'data': 'Size of plotter buffer is ' + str(bufsz) + ' bytes.'})
         socketio.emit('buffer_size', {'data': str(bufsz) })
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        PLOTTER_NAME = 'Plotter'
-        if (config.has_option('plotter', 'name')):
-            PLOTTER_NAME = config['plotter']['name']
         notification.telegram_sendNotification(PLOTTER_NAME + ': Starting Plot')
 
     prev_percent = 0
@@ -267,11 +263,6 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
                     socketio.emit('buffer_space', {'data': str(bufsp)})
                     
             print('*** End of Print, exiting.')    
-            config = configparser.ConfigParser()
-            config.read('config.ini')
-            PLOTTER_NAME = 'Plotter'
-            if (config.has_option('plotter', 'name')):
-                PLOTTER_NAME = config['plotter']['name']
             notification.telegram_sendNotification(PLOTTER_NAME + ': Plot Finished')    
             socketio.emit('bytes_written', {'data': f'**EOP** - {total_bytes_written} bytes sent. Exiting.'})
             socketio.emit('end_of_print', {'data': 'True' })
@@ -282,11 +273,6 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
             percent = int(100.0 * total_bytes_written/input_bytes)
 
             if (percent != prev_percent):
-                config = configparser.ConfigParser()
-                config.read('config.ini')
-                PLOTTER_NAME = 'Plotter'
-                if (config.has_option('plotter', 'name')):
-                    PLOTTER_NAME = config['plotter']['name']
                 if (percent != 25):
                     notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 25%')
                 if (percent != 50):
