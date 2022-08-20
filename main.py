@@ -2,6 +2,7 @@ import os
 import time
 import subprocess
 import configparser
+import notification
 
 from flask import Flask, Response, render_template, request, redirect, url_for, abort, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
@@ -236,8 +237,6 @@ def start_plot():
 def stop_plot():
     if request.method == "GET":
         globals.printing = False
-        config = configparser.ConfigParser()
-        config.read('config.ini')
         PLOTTER_NAME = 'Plotter'
         if (config.has_option('plotter', 'name')):
             PLOTTER_NAME = config['plotter']['name']
