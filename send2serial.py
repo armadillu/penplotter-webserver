@@ -9,6 +9,7 @@ import serial
 import serial.tools.list_ports
 from serial import SerialException
 from flask_socketio import SocketIO, emit
+import configparser
 import notification
 import globals
 
