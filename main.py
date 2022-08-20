@@ -41,6 +41,7 @@ def make_tree(path):
     except OSError:
         pass #ignore errors
     else:
+        lst = sorted(lst)
         for name in lst:
             fn = os.path.join(path, name)
             if os.path.isdir(fn):
