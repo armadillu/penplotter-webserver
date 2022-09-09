@@ -241,7 +241,8 @@ def stop_plot():
         PLOTTER_NAME = 'Plotter'
         if (config.has_option('plotter', 'name')):
             PLOTTER_NAME = config['plotter']['name']
-        notification.telegram_sendNotification(PLOTTER_NAME + ': Plot Cancelled')
+        notification.telegram_sendNotification(PLOTTER_NAME + ': ' + globals.current_file + ': Cancelled')
+        globals.current_file = 'None'
         return 'Plot stopped'
 
 # Start converting file using vpype
