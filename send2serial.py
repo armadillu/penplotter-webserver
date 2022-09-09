@@ -203,13 +203,15 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
             socketio.emit('error', {'data': '*** Error initializing the plotter!'})
             socketio.emit('error', {'data': str(e)})
-            notification.telegram_sendNotification(PLOTTER_NAME + ': Error initializing the plotter')
+            notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': Error initializing the plotter')
             return
 
         print('Size of plotter buffer is ', bufsz, ' bytes.')
         socketio.emit('status_log', {'data': 'Size of plotter buffer is ' + str(bufsz) + ' bytes.'})
         socketio.emit('buffer_size', {'data': str(bufsz) })
-        notification.telegram_sendNotification(PLOTTER_NAME + ': Starting Plot')
+        globals.current_file = hpglfile.replace("uploads/", "").replace(".hpgl", "")
+        globals.start_stamp = int( time.time() )
+        notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': Starting')
 
     prev_percent = 0
 
@@ -240,7 +242,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
                 socketio.emit('error', {'data': '*** Error on buffer spcace querry!'})
                 socketio.emit('error', {'data': str(e)})
-                notification.telegram_sendNotification(PLOTTER_NAME + ': Error on buffer spcace querry')
+                notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': Error on buffer spcace querry')
                 return
 
             # print('Buffer has ', bufsp, ' bytes of free space.')
@@ -263,7 +265,9 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
                     socketio.emit('buffer_space', {'data': str(bufsp)})
                     
             print('*** End of Print, exiting.')    
-            notification.telegram_sendNotification(PLOTTER_NAME + ': Plot Finished')    
+            minutes = int((globals.current_file - time.time()) /60)
+            notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': Finished' + ': ' + math.ceil(minutes))    
+            globals.current_file = 'None'
             socketio.emit('bytes_written', {'data': f'**EOP** - {total_bytes_written} bytes sent. Exiting.'})
             socketio.emit('end_of_print', {'data': 'True' })
             break
@@ -274,11 +278,11 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
             if (percent != prev_percent):
                 if (percent == 25):
-                    notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 25%')
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 25%')
                 if (percent == 50):
-                    notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 50%')
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 50%')
                 if (percent == 75):
-                    notification.telegram_sendNotification(PLOTTER_NAME + ': Plot @ 75%')
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 75%')
                 # print(f'{percent:.0f}%, {total_bytes_written} bytes written.')
                 socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
                 # socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
