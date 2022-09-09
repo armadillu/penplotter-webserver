@@ -4,6 +4,7 @@
 
 import sys
 import time
+import math
 import os
 import serial
 import serial.tools.list_ports
@@ -210,7 +211,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
         socketio.emit('status_log', {'data': 'Size of plotter buffer is ' + str(bufsz) + ' bytes.'})
         socketio.emit('buffer_size', {'data': str(bufsz) })
         globals.current_file = hpglfile.replace("uploads/", "").replace(".hpgl", "")
-        globals.start_stamp = int( time.time() )
+        globals.start_stamp = time.time()
         notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': Starting')
 
     prev_percent = 0
@@ -265,9 +266,10 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
                     socketio.emit('buffer_space', {'data': str(bufsp)})
                     
             print('*** End of Print, exiting.')    
-            minutes = int((globals.current_file - time.time()) /60)
-            notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': Finished' + ': ' + math.ceil(minutes))    
+            minutes = math.ceil((time.time() - globals.start_stamp)/60)
+            notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': Finished' + ': ' + str(minutes) + ' Minutes Total')    
             globals.current_file = 'None'
+            globals.start_stamp = 0
             socketio.emit('bytes_written', {'data': f'**EOP** - {total_bytes_written} bytes sent. Exiting.'})
             socketio.emit('end_of_print', {'data': 'True' })
             break
@@ -278,11 +280,14 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
 
             if (percent != prev_percent):
                 if (percent == 25):
-                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 25%')
+                    minutes = math.ceil((time.time() - globals.start_stamp)/60) * 3
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 25%' + ': ' + str(minutes) + ' Minutes Left')
                 if (percent == 50):
-                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 50%')
+                    minutes = math.ceil((time.time() - globals.start_stamp)/60)
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 50%' + ': ' + str(minutes) + ' Minutes Left')
                 if (percent == 75):
-                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 75%')
+                    minutes = math.ceil((time.time() - globals.start_stamp)/60) / 3
+                    notification.telegram_sendNotification(PLOTTER_NAME.replace(" ", "-") + ': ' + globals.current_file + ': 75%' + ': ' + str(minutes) + ' Minutes Left')
                 # print(f'{percent:.0f}%, {total_bytes_written} bytes written.')
                 socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
                 # socketio.emit('bytes_written', {'data': f'{percent:.0f}%, {total_bytes_written} bytes written.'})
