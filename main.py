@@ -13,7 +13,7 @@ import send2serial
 import tasmota
 
 # import RPi.GPIO as GPIO
-  
+
 
 # Read Configuration
 config = configparser.ConfigParser()
@@ -30,7 +30,7 @@ socketio = SocketIO(app)
 
 # Buttons setup
 
-# GPIO.setmode(GPIO.BCM) 
+# GPIO.setmode(GPIO.BCM)
 # GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 # GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -51,8 +51,8 @@ def make_tree(path):
                     tree['content'].append(dict(name=name))
     return tree
 
-# def plot(file, port, baudrate = '9600', device = '7475a', poweroff = 'off'):
-def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off'):
+# def plot(file, port, baudrate = '9600', device = '7475a', poweroff = 'off', timelapse = 'off'):
+def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off', timelapse = 'off'):
     if file:
         if os.path.exists(file):
 
@@ -64,12 +64,20 @@ def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off'
                 tasmota.tasmota_setStatus(socketio, 'on')
                 time.sleep(2) # Just to be sure, wait 2 seconds
 
+            # Timelapse - start timelapse
+            if timelapse == 'on':
+                subprocess.Popen('systemctl start timelapse', shell=True)
+
             # Start printing
             send2serial.sendToPlotter(socketio, str(file), str(port), int(baudrate), str(flowControl))
 
             # Tasmota - turn off plotter
             if poweroff == 'on':
                 tasmota.tasmota_setStatus(socketio, 'off')
+
+            # Timelapse - stop timelapse
+            if timelapse == 'on':
+                subprocess.Popen('systemctl stop timelapse', shell=True)
 
             # Lock editing while printing
             socketio.emit('lock_edit', {'data': 'off'})
@@ -93,7 +101,7 @@ def convert(file, outputsize = 'a4',  pageorientation = 'landscape', device = 'h
         else:
             args += ' eval w,h=gprop.vp_page_size crop 0 0 %w% %h% rect -l1000 0 0 %w% %h% layout -m  0 ' + outputsize + ' ldelete 1000';
 
-        # Vpype optimise 
+        # Vpype optimise
 
         if linemerge :
             args += ' linemerge --tolerance 0.2mm';
@@ -106,10 +114,10 @@ def convert(file, outputsize = 'a4',  pageorientation = 'landscape', device = 'h
         if reloop :
             args += ' reloop';
             vpype_options +="-reloop"
-            
+
         if linesort :
             args += ' linesort';
-            vpype_options +="-linesort"            
+            vpype_options +="-linesort"
 
         args += ' write --device ' + str(device);
 
@@ -133,13 +141,13 @@ def convert(file, outputsize = 'a4',  pageorientation = 'landscape', device = 'h
         else:
             socketio.emit('status_log', {'data': 'File converted.'})
             return 'Exported ' + str(outputFile)
-# ////////////////////////////////////////////////////////////////////////////            
+# ////////////////////////////////////////////////////////////////////////////
 # Buttons :TODO - something useful with buttons
 def start_button(channel):
     socketio.emit('status_log', {'data': 'Button 2 was pushed!'})
 
 def stop_button(channel):
-    socketio.emit('status_log', {'data': 'Button 1 was pushed!'})    
+    socketio.emit('status_log', {'data': 'Button 1 was pushed!'})
 
 # GPIO.add_event_detect(27,GPIO.RISING,callback=start_button)
 # GPIO.add_event_detect(22,GPIO.RISING,callback=stop_button)
@@ -228,8 +236,9 @@ def start_plot():
         baudrate = request.form.get('baudrate')
         flowControl = request.form.get('flowControl')
         tasmota = request.form.get('tasmota')
+        timelapse = request.form.get('timelapse')
 
-        plot(file, port, baudrate, flowControl, tasmota)
+        plot(file, port, baudrate, flowControl, tasmota, timelapse)
 
         return 'Plot started'
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=Start the Timelapse script.
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/webplotter
+ExecStart= python3 /home/pi/webplotter/timelapse.py
+RemainAfterExit=true
+ExecStop=/usr/bin/pkill -f timelapse.py
+StandardOutput=journal
+StandardError=journal
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target

@@ -90,8 +90,14 @@
       <div class="left-content-box uk-margin-top">
         <h5>TASMOTA CONTROL</h5>
         <div class="uk-margin-small uk-grid-small uk-child-width-auto uk-grid">
-          <label><input id="tasmota" class="uk-checkbox" type="checkbox" name="tasmota" checked> Shutdown <br> when plot
-            is completed</label>
+          <label><input id="tasmota" class="uk-checkbox" type="checkbox" name="tasmota"> Shutdown when done</label>
+        </div>
+      </div>
+
+      <div class="left-content-box uk-margin-top">
+        <h5>TIMELAPSE</h5>
+        <div class="uk-margin-small uk-grid-small uk-child-width-auto uk-grid">
+          <label><input id="tasmota" class="uk-checkbox" type="checkbox" name="timelapse"> Enable timelapse</label>
         </div>
       </div>
     </div>
@@ -675,7 +681,7 @@
         }
       })
 
-      // get buffer space 
+      // get buffer space
       socket.on('buffer_space', function (msg, cb) {
         // console.log ("buff "+ (msg.data))
         if (msg.data > 0) {
