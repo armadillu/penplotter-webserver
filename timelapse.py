@@ -6,7 +6,7 @@ import time
 
 count = 0
 save_directory = '/home/pi/webplotter/timelapse/'
-command = 'libcamera-jpeg -o /home/pi/webplotter/timelapse/{}.jpg -n -t 1 --width 3840 --height 2160 --shutter 125000'
+command = 'libcamera-jpeg -o /home/pi/webplotter/timelapse/{}.jpg -n -t 1 --shutter 8000 --exposure sport --awb tungsten'
 
 isExist = os.path.exists(save_directory)
 if not isExist:
