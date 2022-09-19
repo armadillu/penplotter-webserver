@@ -66,7 +66,7 @@ def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off'
 
             # Timelapse - start timelapse
             if timelapse == 'on':
-                subprocess.Popen('systemctl start timelapse', shell=True)
+                subprocess.Popen('sudo systemctl start timelapse', shell=True)
 
             # Start printing
             send2serial.sendToPlotter(socketio, str(file), str(port), int(baudrate), str(flowControl))
@@ -77,7 +77,7 @@ def plot(file, port, baudrate = '9600', flowControl = "ctsrts", poweroff = 'off'
 
             # Timelapse - stop timelapse
             if timelapse == 'on':
-                subprocess.Popen('systemctl stop timelapse', shell=True)
+                subprocess.Popen('sudo systemctl stop timelapse', shell=True)
 
             # Lock editing while printing
             socketio.emit('lock_edit', {'data': 'off'})
