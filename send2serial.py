@@ -196,6 +196,7 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
     if flowControl not in ['HP-IB','XON/XOFF']:
         try:
             bufsz = plotter_cmd(tty, b'\033.L', True)
+            bufsz = 400; #oriol override
             socketio.emit('buffer_size', {'data': str(bufsz) })
 
         except HPGLError as e:
@@ -229,8 +230,11 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
         #  there is a bug in pyserial - we need to handle CTS ourselves 
         #  https://github.com/pyserial/pyserial/issues/89#issuecomment-811932067
 
+        bufsp = 0;
+
         if flowControl in ["CTS/RTS", "HP-IB"]:
             while not tty.getCTS():
+                time.sleep(0.1)
                 pass
 
         if flowControl not in ['HP-IB','XON/XOFF']:
@@ -249,9 +253,14 @@ def sendToPlotter(socketio, hpglfile, port , baud , flowControl):
             # print('Buffer has ', bufsp, ' bytes of free space.')
             socketio.emit('buffer_space', {'data': str(bufsp) })
 
-        
+            while bufsp < 200:
+                time.sleep(0.5)
+                bufsp = plotter_cmd(tty, b'\033.B', True)
+                print("waiting... " + str(bufsp));
+    
         if (flowControl == 'Software'):
             if bufsp < bufsz/2: # the smallest buffer on the 7440a is 60 bytes                    
+                print("sleeping... " + str(bufsp));
                 time.sleep(0.1)                    
 
         tty.write(data)
